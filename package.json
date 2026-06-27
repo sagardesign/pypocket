@@ -1,0 +1,19 @@
+{
+  "name": "pypocket",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev:web",
+    "dev:web": "npm run dev -w apps/web",
+    "dev:admin": "npm run dev -w apps/admin",
+    "build:web": "npm run build -w apps/web",
+    "build:admin": "npm run build -w apps/admin",
+    "start:web": "npm run start -w apps/web",
+    "start:admin": "npm run start -w apps/admin",
+    "install:all": "npm install"
+  }
+}

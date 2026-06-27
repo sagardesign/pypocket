@@ -1,0 +1,152 @@
+# PyPocket Implementation Plan
+
+PyPocket is a full-stack, mobile-first Python learning platform designed to feel like a combination of Duolingo, Notion, and Replit. It targets students who primarily or only own smartphones, meaning all UI/UX details, including the code editor and compiler output, must be optimized for small screens (320px to 768px), touch gestures, and low connectivity (PWA & client-side Pyodide compiler execution).
+
+## User Review Required
+
+> [!IMPORTANT]
+> - **Google OAuth Auth**: We will implement a mockable JWT/OAuth integration. If you have production client IDs, they can be configured via environment variables.
+> - **Sandbox Execution Security**: The backend Docker sandbox requires running a lightweight docker-in-docker or python-isolate sub-process container. We will implement a resource-limited execution runner using subprocess limits (Unix-compatible CPU/Memory/Network constraints) inside a containerized sandbox.
+> - **Offline Sync**: For PWA client-side offline mode, we will cache the learning roadmap and compiler states via IndexedDB/localStorage. Streak and XP updates will sync once the client is online.
+
+## Open Questions
+
+- **Do you want local language support (e.g., Hindi, Bengali) pre-configured with translation JSONs?**
+  - *Recommendation*: We will configure a Next.js standard JSON translation structure (e.g. `public/locales/`) with English and Hindi files as a demonstration.
+
+---
+
+## Proposed Changes
+
+We will construct a monorepo setup using **npm workspaces** containing the Next.js application, FastAPI app, compiler runner, shared configurations, and docker assets.
+
+```
+pypocket/
+├── apps/
+│   ├── web/           # Next.js Frontend (React, Tailwind, Framer Motion, PWA)
+│   ├── api/           # FastAPI Backend (Python, SQLAlchemy, PostgreSQL, Redis)
+│   ├── compiler/      # Sandbox Code Execution Microservice (Python, Docker Runner)
+│   └── admin/         # Admin Analytics & Dashboard (Integrated as a route or sub-app)
+├── packages/
+│   ├── ui/            # Reusable UI component templates
+│   ├── config/        # Base ESLint, Tailwind, TypeScript configs
+│   └── types/         # Share DB/API TypeScript schemas
+├── docker/            # Docker configurations (PostgreSQL, Redis, Sandbox environments)
+├── docs/              # System documentation
+└── README.md
+```
+
+### Database Schema
+
+We will initialize a PostgreSQL database with SQLAlchemy models in `apps/api/app/database/models.py`.
+
+```mermaid
+erDiagram
+    users ||--o| profiles : has
+    users ||--o{ lesson_progress : tracks
+    users ||--o{ quiz_attempts : submits
+    users ||--o{ project_submissions : uploads
+    users ||--o{ user_badges : earns
+    users ||--o{ saved_codes : stores
+    users ||--o{ compiler_sessions : runs
+    users ||--o| daily_streaks : maintains
+    users ||--o{ xp_history : records
+    users ||--o{ coins : accumulates
+    users ||--o{ certificates : holds
+    users ||--o{ notifications : receives
+    courses ||--o{ chapters : contains
+    chapters ||--o{ lessons : contains
+    lessons ||--o{ quiz_attempts : contains
+    lessons ||--o{ saved_codes : contains
+```
+
+* **users**: User authentication details (ID, Email, Hashed Password, Roles, JWT metadata)
+* **profiles**: User details (Avatar, Bio, Skills, GitHub, LinkedIn, Portfolio, Level, XP, Coins)
+* **courses & chapters & lessons**: Structure of Python Basics, OOP, Flask, SQL, Django, Career roadmap, etc.
+* **lesson_progress**: Completed status, notes, rating.
+* **saved_codes & compiler_sessions**: User's compiled python code for each lesson.
+* **daily_streaks**: Calculates streak counts, last active timestamps.
+* **xp_history & coins**: Detailed audit of XP and Coins gained.
+* **badges & user_badges**: Gamified achievements.
+* **certificates**: PDF generator reference with UUID, QR-code hash.
+* **discussions & comments**: Community boards.
+
+---
+
+### Backend API (FastAPI)
+
+#### [NEW] [main.py](file:///c:/Users/Sagar/Desktop/PyPocket/apps/api/main.py)
+Root FastAPI entrypoint configuring middlewares (CORS, Rate-limiting), routers, and lifecycle events (DB & Redis connections).
+
+#### [NEW] [models.py](file:///c:/Users/Sagar/Desktop/PyPocket/apps/api/app/database/models.py)
+SQLAlchemy declarative models mapped to the schema. Includes trigger hooks or calculations for daily streaks and automatic level calculations based on XP.
+
+#### [NEW] [auth.py](file:///c:/Users/Sagar/Desktop/PyPocket/apps/api/app/auth/auth.py)
+JWT-based user signup, login, refresh, guest login, and password reset flows.
+
+#### [NEW] [compiler.py](file:///c:/Users/Sagar/Desktop/PyPocket/apps/api/app/compiler/compiler.py)
+FastAPI router to forward backend-execution requests to the docker compiler runner.
+
+#### [NEW] [leaderboard.py](file:///c:/Users/Sagar/Desktop/PyPocket/apps/api/app/leaderboard/leaderboard.py)
+Calculates overall and weekly user rankings using Redis sorted sets (ZADD, ZREVRANGE) for fast response times.
+
+---
+
+### Sandbox Compiler Service (Python Microservice)
+
+#### [NEW] [runner.py](file:///c:/Users/Sagar/Desktop/PyPocket/apps/compiler/runner.py)
+Extracts, writes, and executes raw Python scripts inside an isolated environment (Unix limits, timeouts, memory boundaries, disabled network).
+
+#### [NEW] [security.py](file:///c:/Users/Sagar/Desktop/PyPocket/apps/compiler/security.py)
+Performs static analysis on input python code (e.g. using `ast` parsing) to reject calls to `os`, `sys`, `subprocess`, socket manipulation, and file-system tampering prior to execution.
+
+---
+
+### Next.js Frontend Web Application (Next.js 14 App Router)
+
+The frontend will use Tailwind CSS, Framer Motion, and TypeScript. It is designed to run natively as a PWA, storing assets locally to function offline with an embedded **Pyodide** runner.
+
+#### [NEW] [page.tsx](file:///c:/Users/Sagar/Desktop/PyPocket/apps/web/app/page.tsx)
+Landing Page & Guest Login trigger.
+
+#### [NEW] [layout.tsx](file:///c:/Users/Sagar/Desktop/PyPocket/apps/web/app/layout.tsx)
+Base layout with dynamic ThemeProvider (Dark/Light mode support), Redux or React Context wrapper for User State (XP, Level, Coins, Streak), and mobile navigation bars.
+
+#### [NEW] [dashboard/page.tsx](file:///c:/Users/Sagar/Desktop/PyPocket/apps/web/app/dashboard/page.tsx)
+Thumb-friendly mobile dashboard showing Current Streak, Level Progress circular indicator, Daily Goals, Upcoming Projects, continue button, and XP graph.
+
+#### [NEW] [roadmap/page.tsx](file:///c:/Users/Sagar/Desktop/PyPocket/apps/web/app/roadmap/page.tsx)
+Duolingo-style learning map. Circular node path with unlockable status, animated XP gains, and progress visualizer.
+
+#### [NEW] [lesson/[id]/page.tsx](file:///c:/Users/Sagar/Desktop/PyPocket/apps/web/app/lesson/[id]/page.tsx)
+Multi-tab or swipe-based interface for smartphone dimensions:
+* **Tab 1: Learning**: Short videos, notes, interactive slides (Notion-like toggles).
+* **Tab 2: Practice (Compiler)**: Embedded Pyodide code editor (CodeMirror or custom lightweight textarea editor suited for mobile keyboard overlays), Run button, Console Output.
+* **Tab 3: Verify (Quiz & Challenge)**: Interactive gamified quiz blocks with instant feedback (sound effect cues, confetti upon completion).
+
+#### [NEW] [compiler/page.tsx](file:///c:/Users/Sagar/Desktop/PyPocket/apps/web/app/compiler/page.tsx)
+Full standalone Python IDE featuring save/reset/download buttons, autocomplete options tailored for touch keyboards, line-numbers, and terminal outputs.
+
+#### [NEW] [PWA Support (manifest.json & service-worker.js)](file:///c:/Users/Sagar/Desktop/PyPocket/apps/web/public/manifest.json)
+Allows students to "Add to Home Screen" on Android/iOS, caches lesson syllabus offline, and loads Pyodide dynamically from local state/cache.
+
+---
+
+### Docker & Infrastructure
+
+#### [NEW] [docker-compose.yml](file:///c:/Users/Sagar/Desktop/PyPocket/docker-compose.yml)
+Coordinates PostgreSQL database container, Redis instance, FastAPI server container, Next.js UI container, and the Compiler sandbox execution microservice.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- Backend pytest test suite testing JWT Auth, database insertions, and Redis streak calculations.
+- Compiler tests running recursive tests, slow infinite loops (`while True:` to confirm timeout), file system blockages, and network blockages.
+- Next.js build validation and typescript validation checks.
+
+### Manual Verification
+- View viewport responsiveness across simulated mobile sizes: 320px (SE), 390px (iPhone 13), 412px (Samsung), and 768px (iPad).
+- Test Pyodide compiler offline by toggling Network Offline in Chrome Developer Tools.
+- Validate gamification confetti trigger when completing a sample lesson module.

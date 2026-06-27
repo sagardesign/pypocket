@@ -1,0 +1,18 @@
+{
+  "name": "PyPocket Python Platform",
+  "short_name": "PyPocket",
+  "description": "Learn Python on your smartphone like Duolingo, Notion, and Replit",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#8b5cf6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/5968/5968350.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
