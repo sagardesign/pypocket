@@ -180,6 +180,12 @@ PyPocket aims to make Python education accessible to every student, especially t
 
 Contributions are welcome!
 
+# 📄 License
+
+All Rights Reserved.
+
+This project is provided for viewing and educational purposes only. No part of this project may be copied, modified, or redistributed without prior written permission.
+
 If you'd like to improve PyPocket, feel free to fork the repository, create a feature branch, and submit a pull request.
 
 ---
