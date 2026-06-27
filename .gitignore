@@ -1,0 +1,92 @@
+# Node.js dependencies
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Python dependencies
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/*.pyd
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Python virtualenvs
+venv/
+ENV/
+venv.bak/
+
+# Local environment files
+.env
+.env.*
+
+# Build output
+dist/
+build/
+.next/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Docker
+docker-compose.override.yml
+**/docker-compose.override.yml
+
+# Python bytecode
+*.pyc
+
+# Misc
+*.log
+*.sqlite3
+*.db
+
+# OS generated files
+Thumbs.db
+desktop.ini
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Test results
+junitxml/
+pytest_cache/
+
+# JetBrains
+.idea/
+*.iml
+
+# TypeScript cache
+*.tsbuildinfo
